@@ -62,10 +62,13 @@ else
 	ifeq ($(shell uname -s),Darwin)
 		DONT_BUILD_LZHAM ?= 1
 		DONT_BUILD_CSC ?= 1
+		LDFLAGS	+= -lpthread
+	else ifeq ($(shell uname -o),Android)
+		LDFLAGS += -lc
 	else
 		LDFLAGS	+= -lrt -static
+		LDFLAGS	+= -lpthread
 	endif
-	LDFLAGS	+= -lpthread
 endif
 
 
