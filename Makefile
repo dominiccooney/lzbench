@@ -1,5 +1,17 @@
 # direct GNU Make to search the directories relative to the
 # parent directory of this file
+
+DONT_BUILD_CSC=1
+DONT_BUILD_DENSITY=1
+DONT_BUILD_GLZA=1
+DONT_BUILD_LZHAM=1
+DONT_BUILD_LZSSE=1
+DONT_BUILD_LZSSE=1
+DONT_BUILD_TORNADO=1
+DONT_BUILD_XPACK=1
+DONT_BUILD_YAPPY=1
+DONT_BUILD_ZLING=1
+
 SOURCE_PATH=$(dir $(lastword $(MAKEFILE_LIST)))
 vpath
 vpath %.c $(SOURCE_PATH)
