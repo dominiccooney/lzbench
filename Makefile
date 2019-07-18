@@ -66,8 +66,8 @@ else
 	else ifeq ($(shell uname -o),Android)
 		LDFLAGS += -lc
 	else
-		LDFLAGS	+= -lrt -static
-		LDFLAGS	+= -lpthread
+		#LDFLAGS	+= -lrt -static
+		#LDFLAGS	+= -lpthread
 	endif
 endif
 

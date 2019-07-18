@@ -20,6 +20,7 @@
 #include "util.h"
 #include <numeric>
 #include <algorithm> // sort
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -396,6 +397,10 @@ void lzbench_test(lzbench_params_t *params, std::vector<size_t> &file_sizes, con
 
     total_d_iters = 0;
     GetTime(timer_ticks);
+    if (params->suspend) {
+        printf("PID %d about to decompress, suspending self\n", getpid());
+        raise(SIGTSTP);
+    }
     if (!params->compress_only)
     do
     {
@@ -734,6 +739,7 @@ void usage(lzbench_params_t* params)
     fprintf(stderr, " -v    disable progress information\n");
     fprintf(stderr, " -x    disable real-time process priority\n");
     fprintf(stderr, " -z    show (de)compression times instead of speed\n");
+    fprintf(stderr, " --suspend  stop (background) before decompressing\n");
     fprintf(stderr,"\nExample usage:\n");
     fprintf(stderr,"  " PROGNAME " -ezstd filename = selects all levels of zstd\n");
     fprintf(stderr,"  " PROGNAME " -ebrotli,2,5/zstd filename = selects levels 2 & 5 of brotli and zstd\n");
@@ -780,6 +786,7 @@ int main( int argc, char** argv)
     while ((argc>1) && (argv[1][0]=='-')) {
     char* argument = argv[1]+1;
     if (!strcmp(argument, "-compress-only")) params->compress_only = 1;
+    else if (!strcmp(argument, "-suspend")) params->suspend = 1;
     else while (argument[0] != 0) {
         char* numPtr = argument + 1;
         unsigned number = 0;

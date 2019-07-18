@@ -100,6 +100,7 @@ typedef struct
     uint32_t c_iters, d_iters, cspeed, verbose, cmintime, dmintime, cloop_time, dloop_time;
     size_t mem_limit;
     int random_read;
+    bool suspend;
     std::vector<string_table_t> results;
     const char* in_filename;
 } lzbench_params_t;
