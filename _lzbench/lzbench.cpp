@@ -18,6 +18,11 @@
 
 #include "lzbench.h"
 #include "util.h"
+
+#ifdef SIMPLEPERF
+#include "simpleperf/simpleperf.h"
+#endif
+
 #include <numeric>
 #include <algorithm> // sort
 #include <signal.h>
@@ -330,6 +335,9 @@ void lzbench_test(lzbench_params_t *params, std::vector<size_t> &file_sizes, con
     char* workmem = NULL;
     size_t param2 = desc->additional_param;
     size_t chunk_size = (params->chunk_size > insize) ? insize : params->chunk_size;
+#ifdef SIMPLEPERF
+    std::unique_ptr<simpleperf::ProfileSession> profile_session;
+#endif
 
     LZBENCH_PRINT(5, "*** trying %s insize=%d comprsize=%d chunk_size=%d\n", desc->name, (int)insize, (int)comprsize, (int)chunk_size);
 
@@ -401,11 +409,23 @@ void lzbench_test(lzbench_params_t *params, std::vector<size_t> &file_sizes, con
         printf("PID %d about to decompress, suspending self\n", getpid());
         raise(SIGTSTP);
     }
+#ifdef SIMPLEPERF
+    if (params->simple_perf) {
+      profile_session.reset(new simpleperf::ProfileSession("/data/data/com.termux"));
+      simpleperf::RecordOptions options;
+      profile_session->StartRecording(options);
+      profile_session->PauseRecording();
+    }
+#endif
     if (!params->compress_only)
     do
     {
         i = 0;
         uni_sleep(1); // give processor to other processes
+#ifdef SIMPLEPERF
+	if (profile_session)
+	  profile_session->ResumeRecording();
+#endif
         GetTime(loop_ticks);
         do
         {
@@ -417,6 +437,10 @@ void lzbench_test(lzbench_params_t *params, std::vector<size_t> &file_sizes, con
             i++;
         }
         while (GetDiffTime(rate, loop_ticks, end_ticks) < params->dloop_time);
+#ifdef SIMPLEPERF
+	if (profile_session)
+	  profile_session->PauseRecording();
+#endif
 
         nanosec = GetDiffTime(rate, loop_ticks, end_ticks);
         dtime.push_back(nanosec/i);
@@ -459,6 +483,11 @@ void lzbench_test(lzbench_params_t *params, std::vector<size_t> &file_sizes, con
         LZBENCH_PRINT(2, "%s decompr iter=%d time=%.2fs speed=%.2f MB/s     \r", desc->name, total_d_iters, total_nanosec/1000000000.0, (float)insize*i*1000/nanosec);
     }
     while (true);
+
+#ifdef SIMPLEPERF
+    if (profile_session)
+      profile_session->StopRecording();
+#endif
 
  //   printf("total_c_iters=%d total_d_iters=%d            \n", total_c_iters, total_d_iters);
     print_stats(params, desc, level, ctime, dtime, insize, complen, decomp_error);
@@ -740,6 +769,12 @@ void usage(lzbench_params_t* params)
     fprintf(stderr, " -x    disable real-time process priority\n");
     fprintf(stderr, " -z    show (de)compression times instead of speed\n");
     fprintf(stderr, " --suspend  stop (background) before decompressing\n");
+#ifdef SIMPLEPERF
+    fprintf(stderr, " --sp  simpleperf during decompression to\n");
+    fprintf(stderr, "       /data/data/com.termux/simpleperf_data/perf.data\n");
+    fprintf(stderr, "       simpleperf binary should be in /data/data/com.termux/files/home/simpleperf\n");
+    fprintf(stderr, "       check adb logcat for crash dumps\n");
+#endif
     fprintf(stderr,"\nExample usage:\n");
     fprintf(stderr,"  " PROGNAME " -ezstd filename = selects all levels of zstd\n");
     fprintf(stderr,"  " PROGNAME " -ebrotli,2,5/zstd filename = selects levels 2 & 5 of brotli and zstd\n");
@@ -787,6 +822,9 @@ int main( int argc, char** argv)
     char* argument = argv[1]+1;
     if (!strcmp(argument, "-compress-only")) params->compress_only = 1;
     else if (!strcmp(argument, "-suspend")) params->suspend = 1;
+#ifdef SIMPLEPERF
+    else if (!strcmp(argument, "-sp")) params->simple_perf = 1;
+#endif
     else while (argument[0] != 0) {
         char* numPtr = argument + 1;
         unsigned number = 0;

@@ -101,6 +101,7 @@ typedef struct
     size_t mem_limit;
     int random_read;
     bool suspend;
+    bool simple_perf;
     std::vector<string_table_t> results;
     const char* in_filename;
 } lzbench_params_t;
