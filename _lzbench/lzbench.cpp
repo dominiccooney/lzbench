@@ -410,7 +410,7 @@ void lzbench_test(lzbench_params_t *params, std::vector<size_t> &file_sizes, con
         raise(SIGTSTP);
     }
 #ifdef SIMPLEPERF
-    if (params->simple_perf) {
+    if (params->simple_perf && desc->decompress != lzbench_memcpy) {
       profile_session.reset(new simpleperf::ProfileSession("/data/data/com.termux"));
       simpleperf::RecordOptions options;
       profile_session->StartRecording(options);
