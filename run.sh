@@ -8,6 +8,8 @@ function run_bench {
     echo -n $method, 
     date
     $lzdir/lzbench -o4 -j -e$method --sp -j ~/corpus/js/3*
+    $lzdir/lzbench -o4 -j -e$method --sp -j ~/corpus/css/3*
+    $lzdir/lzbench -o4 -j -e$method --sp -j ~/corpus/html/3*
 }
 
 for i in $(seq 1 2 19)
